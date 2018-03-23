@@ -105,4 +105,7 @@
 //  K0SM 599 05 NY NY
 //     --> <LTR>K<FIG>0<LTR>SM <FIG>599 <FIG>05 <LTR>NY NY
 
+#define FSK_MODE 0
+#define CW_MODE 1
+
 #endif // _CONSTANTS_H_

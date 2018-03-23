@@ -32,11 +32,7 @@
 
 #include "Arduino.h"
 
-//#define ST_Pin 4      // Sidetone Output Pin on Pin 4
-// paddle input pins compatible with MORTTY board
-
-#define LP_in 2       // Left Paddle Input on Pin 2
-#define RP_in 5       // Right Paddle Input on Pin 5
+#include "config.h"
 
 #define IAMBICA 0
 #define IAMBICB 1

@@ -43,8 +43,8 @@
 // uncomment the desired h/w configuration
 // comment the others
 #define MORTTY 1
-//#define HA2OS  1
-//#define OTHER  1
+// #define HA2OS  1
+// #define OTHER  1
 //----------------------------------------------------------------------
 
 #ifdef MORTTY
@@ -52,17 +52,32 @@
 #  define FSK_PIN 11
 #  define CW_PIN  11
 #  define PTT_PIN 13
+//#  define ST_Pin 4      // Sidetone Output Pin on Pin 4
+// paddle input pins compatible with MORTTY board
+#  define LP_in 2       // Left Paddle Input on Pin 2
+#  define RP_in 5       // Right Paddle Input on Pin 5
+#  define DEFAULT_MODE CW_MODE
 #else
 #  ifdef HA2OS
 // Pin designations for HA2OS quad opto-isolator circuit board design
-#    define FSK_PIN 11
-#    define CW_PIN  12
-#    define PTT_PIN 13
+#    define FSK_PIN 12
+#    define CW_PIN  10
+#    define PTT_PIN 11
+//#    define ST_Pin 4      // Sidetone Output Pin on Pin 4
+//   paddle input pins
+#    define LP_in 5       // Left Paddle Input on Pin 2
+#    define RP_in 2       // Right Paddle Input on Pin 5
+#    define DEFAULT_MODE CW_MODE
 #  else
 // change these for OTHER h/w design
 #    define FSK_PIN 11
 #    define CW_PIN  12
 #    define PTT_PIN 13
+//#    define ST_Pin 4      // Sidetone Output Pin on Pin 4
+//   paddle input pins
+#    define LP_in 2       // Left Paddle Input on Pin 2
+#    define RP_in 5       // Right Paddle Input on Pin 5
+#    define DEFAULT_MODE FSK_MODE
 #  endif
 #endif
 

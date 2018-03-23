@@ -41,8 +41,8 @@ enum KSTYPE {IDLE, CHK_DIT, CHK_DAH, KEYED_PREP, KEYED, INTER_ELEMENT };
 
 Keyer::Keyer(int wpm, float weight)
 {
-	ptt_pin_ = 13;
-	cw_pin_ = 11;
+	ptt_pin_ = PTT_PIN;
+	cw_pin_ = CW_PIN;
 // Setup outputs
 	pinMode(LP_in, INPUT);            // sets Left Paddle digital pin as input
 	pinMode(RP_in, INPUT);            // sets Right Paddle digital pin as input

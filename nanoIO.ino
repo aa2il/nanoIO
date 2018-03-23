@@ -30,8 +30,6 @@
 
 ***********************************************************************/
 
-#include "config.h"
-
 #include "TimerOne.h"
 #include "Morse.h"
 #include "Keyer.h"
@@ -39,6 +37,8 @@
 #include "EEPROM.h"
 #include "constants.h"
 #include "ascii_map.h"
+
+#include "config.h"
 
 /******************************************************
      Variable declarations
@@ -95,10 +95,7 @@ volatile boolean isrFlag = false;   //set by timer interrupt.  Set high every 1/
 boolean configurationMode = false;  //flag indicates if we are in the menu system or
 //in normal operation.
 
-#define FSK_MODE 0
-#define CW_MODE 1
-
-int mode = FSK_MODE;
+int mode = DEFAULT_MODE;
 //----------------------------------------------------------------------
 // CW variables
 
