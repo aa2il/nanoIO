@@ -27,12 +27,21 @@
   Revisions:
 
   //1.0.0:  Initial release
+  //1.0.1:  MORTTY Version 3 board support
+  //1.1.0:  added support for WPM potentiometer; wiper on A0
 
 ***********************************************************************/
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
-#define VERSION "1.0.0"
+#define VERSION "1.1.0"
+
+//#define MORTTY_V2
+//#define MORTTY_V3
+//#define HA2OS
+#define W1HKJ
+
+//#define WITH_SPEED_POT
 
 //----------------------------------------------------------------------
 // values which may need to be changed depending on specific hardware
@@ -42,43 +51,62 @@
 //Arduino pins for FSK, CW and PTT to control transmitter
 // uncomment the desired h/w configuration
 // comment the others
-#define MORTTY 1
-// #define HA2OS  1
-// #define OTHER  1
-//----------------------------------------------------------------------
 
-#ifdef MORTTY
-// Pin designations for MORTTY circuit board
+#ifdef MORTTY_V3
+//----------------------------------------------------------------------
+// Configuration for MORTTY Version 2 circuit board
+//----------------------------------------------------------------------
 #  define FSK_PIN 11
 #  define CW_PIN  11
 #  define PTT_PIN 13
-//#  define ST_Pin 4      // Sidetone Output Pin on Pin 4
+#  define ST_Pin 4      // Sidetone Output Pin on Pin 4
 // paddle input pins compatible with MORTTY board
 #  define LP_in 2       // Left Paddle Input on Pin 2
 #  define RP_in 5       // Right Paddle Input on Pin 5
 #  define DEFAULT_MODE CW_MODE
-#else
-#  ifdef HA2OS
-// Pin designations for HA2OS quad opto-isolator circuit board design
+#endif
+
+#ifdef MORTTY_V3
+//----------------------------------------------------------------------
+// Configuration for MORTTY Version 3 circuit board
+//----------------------------------------------------------------------
+#  define FSK_PIN 11
+#  define CW_PIN  12
+#  define PTT_PIN 13
+#  define ST_Pin 4      // Sidetone Output Pin on Pin 4
+// paddle input pins compatible with MORTTY board
+#  define RP_in 2       // Right Paddle Input on Pin 2
+#  define LP_in 5       // Left Paddle Input on Pin 5
+#  define DEFAULT_MODE CW_MODE
+#  define WPM_POT 0
+#endif
+
+#ifdef HA2OS
+//----------------------------------------------------------------------
+// Configuration for HA2OS quad opto-isolator circuit board design
+//----------------------------------------------------------------------
 #    define FSK_PIN 12
 #    define CW_PIN  10
 #    define PTT_PIN 11
-//#    define ST_Pin 4      // Sidetone Output Pin on Pin 4
+#    define ST_Pin 4      // Sidetone Output Pin on Pin 4
 //   paddle input pins
 #    define LP_in 5       // Left Paddle Input on Pin 2
 #    define RP_in 2       // Right Paddle Input on Pin 5
 #    define DEFAULT_MODE CW_MODE
-#  else
-// change these for OTHER h/w design
-#    define FSK_PIN 11
-#    define CW_PIN  12
-#    define PTT_PIN 13
-//#    define ST_Pin 4      // Sidetone Output Pin on Pin 4
+#endif
+
+#ifdef W1HKJ
+//----------------------------------------------------------------------
+// Configuration for W1HKJ quad opto-isolator circuit board design
+//----------------------------------------------------------------------
+#    define FSK_PIN 12
+#    define CW_PIN  11
+#    define PTT_PIN 10
+#    define ST_Pin 4      // Sidetone Output Pin on Pin 4
 //   paddle input pins
 #    define LP_in 2       // Left Paddle Input on Pin 2
 #    define RP_in 5       // Right Paddle Input on Pin 5
 #    define DEFAULT_MODE FSK_MODE
-#  endif
 #endif
 
 #endif // __CONFIG_H_

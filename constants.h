@@ -27,6 +27,8 @@
   Revisions:
 
   //1.0.0:  Initial release
+  //1.0.1:  MORTTY Version 3 board support
+  //1.1.0:  added support for WPM potentiometer; wiper on A0
 
 ***********************************************************************/
 
@@ -40,12 +42,17 @@
 
 #define MIN_CW_WPM 5
 #define MAX_CW_WPM 100
+
+#define MIN_POT_WPM 5
+#define MAX_POT_WPM 35
+#define WPM_POT 0
 ///---------------------------------------------------------------------
 
 //EEPROM addresses to persist configuration
-#define EE_SPEED_ADDR 0
-#define EE_POLARITY_ADDR 1
-#define EE_CW_STRUC_ADDR 2
+#define EE_MODE 0
+#define EE_SPEED_ADDR 1
+#define EE_POLARITY_ADDR 2
+#define EE_CW_STRUC_ADDR 3
 
 //Special Baudot symbols for shift
 #define LTRS_SHIFT 0x1F  //baudot letter shift byte
@@ -105,7 +112,7 @@
 //  K0SM 599 05 NY NY
 //     --> <LTR>K<FIG>0<LTR>SM <FIG>599 <FIG>05 <LTR>NY NY
 
-#define FSK_MODE 0
-#define CW_MODE 1
+#define CW_MODE 'C'
+#define FSK_MODE 'F'
 
 #endif // _CONSTANTS_H_

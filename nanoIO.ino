@@ -26,7 +26,9 @@
 
   Revisions:
 
-  //1.0.0:  Initial release
+//1.0.0:  Initial release
+//1.0.1:  MORTTY Version 3 board
+//1.1.0:  added support for WPM potentiometer; wiper on A0
 
 ***********************************************************************/
 
@@ -95,16 +97,19 @@ volatile boolean isrFlag = false;   //set by timer interrupt.  Set high every 1/
 boolean configurationMode = false;  //flag indicates if we are in the menu system or
 //in normal operation.
 
-int mode = DEFAULT_MODE;
+char mode = DEFAULT_MODE;
 //----------------------------------------------------------------------
 // CW variables
 
-struct {
-  int   cw_wpm = 18;
-  float weight = 3.0;
-  int   incr   = 2;
-  int   key_wpm = 18;
-} CWstruc;
+CWSTRUC CWstruc {
+  18,      // int   cw_wpm;
+  300,     // int   weight;
+  2,       // int   incr;
+  18,      // int   key_wpm;
+  IAMBICA, // int   keyer_mode;
+  1,       // int   ptt_enable;
+  1        // int   control; // 0 - computer; 1 - potentiometer
+};
 
 int   spd_cmd = 18;
 float wt_cmd = 3.0;
@@ -112,10 +117,12 @@ float wt_cmd = 3.0;
 boolean weight_string = false;
 boolean speed_string = false;
 boolean user_speed_string = false;
+boolean pot_string = false;
+boolean ptt_string = false;
 boolean incr_char = false;
 
-Morse morse(CWstruc.cw_wpm, CWstruc.weight);
-Keyer keyer(CWstruc.key_wpm, CWstruc.weight);
+Morse morse(CWstruc.cw_wpm, CWstruc.weight/100.0);
+Keyer keyer(CWstruc.key_wpm, CWstruc.weight/100.0);
 
 //----------------------------------------------------------------------
 
@@ -133,10 +140,6 @@ Keyer keyer(CWstruc.key_wpm, CWstruc.weight);
 */
 void setup()
 {
-  Serial.begin(serialSpeed);
-  while (!Serial) {
-    ; // wait for serial port to connect. Needed for Leonardo only
-  }
   // configure pins for output
   pinMode(FSK_PIN, OUTPUT);
   pinMode(PTT_PIN, OUTPUT);
@@ -145,17 +148,25 @@ void setup()
   eeLoad();
 
   morse.wpm(CWstruc.cw_wpm);
-  morse.weight(CWstruc.weight);
+  morse.weight(CWstruc.weight/100.0);
   keyer.wpm(CWstruc.key_wpm);
+  keyer.set_mode(CWstruc.keyer_mode);
 
-  displayConfiguration();
-  displayConfigurationPrompt();
+  Serial.begin(serialSpeed);
+  while (!Serial) {
+    ; // wait for serial port to connect. Needed for Leonardo only
+  }
 
   // start the half-bit timer.
   initTimer();
 
-  Serial.write("cmd:\n"); // Tell N1MM we are in "RX" mode.  This will be sent
-  // at the end of transmission.
+  resetSendBuffer();
+
+//  morse.send('I', CW_PIN);
+//  morse.send('O', CW_PIN);
+
+// Tell N1MM we are in "RX" mode.
+  if (mode == FSK_MODE) Serial.write("cmd:\n");
 }
 
 
@@ -203,6 +214,7 @@ void do_serial()
         break;
       default :
 // add character (b) to send buffer
+        if (b == 0) break;
         if (mode == FSK_MODE)
           addToSendBuffer(b);
         else {
@@ -233,9 +245,42 @@ void do_serial()
   }
 }
 
+void send_wpm()
+{
+  Serial.write("\nwpm "); Serial.println(CWstruc.cw_wpm);
+}
+
+
+void send_ptt_state()
+{
+  Serial.write("ptt ");
+  if (CWstruc.ptt_enable) Serial.write(" enabled\n");
+  else Serial.write(" disabled");
+}
+  
+// Read A0, wiper arm of speed pot, 0 ... 5 v
+// convert to wpm MIN ... MAX
+
+void read_pot_wpm()  
+{
+#ifdef WITH_SPEED_POT
+  int pot_wpm = MIN_POT_WPM + (MAX_POT_WPM - MIN_POT_WPM) * analogRead(WPM_POT) / 1023;
+
+  if ((CWstruc.control == 1) && (pot_wpm != CWstruc.cw_wpm)) {
+    CWstruc.cw_wpm = CWstruc.key_wpm = pot_wpm;
+    keyer.wpm(CWstruc.key_wpm);
+    morse.wpm(CWstruc.cw_wpm);
+  }
+#endif
+}
+
 void loop()
 {
-   if ( !keyer.do_paddles() ) do_serial(); 
+  if (mode == CW_MODE) {
+    read_pot_wpm();
+    if (!keyer.do_paddles()) do_serial();
+  } else
+    do_serial(); 
 }
 
 // Handle configuration change commands by changing variables
@@ -248,6 +293,12 @@ void loop()
 // ~K, ~k - Straight Key
 // ~C, ~c - change to CW output
 // ~F, ~f - change to FSK output
+// ~P1    - CW WPM Pot control ON
+// ~P0    - CW WPM Pot control OFF
+// ~P?    - CW WPM reading
+// ~X0    - disable PTT
+// ~X1    - enable PTT
+// ~X?    - PTT state
 // ~T, ~t - enable CW tune position (] terminates)
 // ~Snnns - change CW WPM to nnn
 // ~Unnnu - change CW keyer WPM to nnn
@@ -277,6 +328,22 @@ void handleConfigurationCommand(byte b)
     spd_cmd = spd_cmd * 10 + b - '0';
     return;
   }
+  if (pot_string) {
+    if (b == '1') CWstruc.control = 1;
+    else if (b == '0') CWstruc.control = 0;
+    else if (b == '?') send_wpm();
+    pot_string = false;
+    configurationMode = false;
+    return;
+  }
+  if (ptt_string) {
+    if (b == '1') CWstruc.ptt_enable = 1;
+    else if (b == '0') CWstruc.ptt_enable = 0;
+    else if (b == '?') send_ptt_state(); 
+    ptt_string = false;
+    configurationMode = false;
+    return;
+  }
   if (incr_char) {
     int val = b - '0';
     if (val > 0 && val < 10) CWstruc.incr = val;
@@ -285,14 +352,17 @@ void handleConfigurationCommand(byte b)
 
   switch (b) {
     case 'A' : case 'a' :
+        CWstruc.keyer_mode = IAMBICA;
         keyer.set_mode(IAMBICA);
         configurationMode = false;
         break;
     case 'B' : case 'b' :
+        CWstruc.keyer_mode = IAMBICB;
         keyer.set_mode(IAMBICB);
         configurationMode = false;
         break;
     case 'K' : case 'k':
+        CWstruc.keyer_mode = STRAIGHT;
         keyer.set_mode(STRAIGHT);
         configurationMode = false;
         break;
@@ -303,6 +373,11 @@ void handleConfigurationCommand(byte b)
     case 'F' : case 'f' :
         mode = FSK_MODE;
         configurationMode = false;
+    case 'P' : case 'p' :
+        pot_string = true;
+        break;
+    case 'X': case 'x' :
+        ptt_string = true;
         break;
     case 'T' : case 't' :
         enable_tune();
@@ -351,8 +426,8 @@ void handleConfigurationCommand(byte b)
     case 'd' : // end dash/dot ratio
         weight_string = false;
         if (wt_cmd >= 250 && wt_cmd <= 350) {
-          CWstruc.weight = wt_cmd / 100;
-          morse.weight(CWstruc.weight);
+          CWstruc.weight = wt_cmd;
+          morse.weight(CWstruc.weight/100.0);
         }
         configurationMode = false;
         break;
@@ -399,7 +474,9 @@ void handleConfigurationCommand(byte b)
       speed_string = false;
       weight_string = false;
       configurationMode = false;
-      Serial.write("\nUnrecognized command.\n");
+      pot_string = false;
+      ptt_string = false;
+      Serial.write("\nCommand?\n");
   }
 }
 
@@ -408,6 +485,8 @@ void handleConfigurationCommand(byte b)
 */
 void eeLoad()
 {
+  mode           = EEPROM.read(EE_MODE);
+  if (mode != CW_MODE && mode != FSK_MODE) mode = CW_MODE;
   byte speedChar = EEPROM.read(EE_SPEED_ADDR);
   byte polarity  = EEPROM.read(EE_POLARITY_ADDR);
 
@@ -438,15 +517,16 @@ void eeLoad()
   if (CWstruc.cw_wpm > MAX_CW_WPM) CWstruc.cw_wpm = 18;
   if (CWstruc.key_wpm < MIN_CW_WPM) CWstruc.key_wpm = 18;
   if (CWstruc.key_wpm > MAX_CW_WPM) CWstruc.key_wpm = 18;
-  if (CWstruc.weight < 2.5) CWstruc.weight = 3.0;
-  if (CWstruc.weight > 3.5) CWstruc.weight = 3.0;
+  if (CWstruc.weight < 250) CWstruc.weight = 300;
+  if (CWstruc.weight > 350) CWstruc.weight = 300;
   if (CWstruc.incr < 1) CWstruc.incr = 2;
   if (CWstruc.incr > 9) CWstruc.incr = 2;
-  eeSave();
+//  eeSave();
 }
 
 void eeSave()
 {
+  EEPROM.write(EE_MODE, mode);
   if (baudrate == 45.45) EEPROM.write(EE_SPEED_ADDR, COMMAND_45BAUD);
   if (baudrate == 50.0)  EEPROM.write(EE_SPEED_ADDR, COMMAND_50BAUD);
   if (baudrate == 75.0)  EEPROM.write(EE_SPEED_ADDR, COMMAND_75BAUD);
@@ -483,15 +563,25 @@ void timerISR()
 */
 void displayConfigurationPrompt()
 {
-
-  Serial.write("\
+Serial.write("\
 \nCmd ~...\n\
  C,c   CW mode\n\
  F,f   FSK mode\n\
  T,t   CW Tune\n\
  Snnns computer wpm 10...100\n\
  Unnnu key (user) wpm 10...100\n\
- Dnnnd dash/dot 250...350 (2.5...3.5)\n\
+ Dnnnd dash/dot 250...350 (2.5...3.5)\n");
+ #ifdef WITH_SPEED_POT
+ Serial.write("\
+ P0    CW pot disabled\n\
+ P1    CW pot enabled\n\
+ P?    CW pot wpm setting\n");
+ #endif
+ Serial.write("\
+ X0    ptt disabled\n\
+ X1    ptt enabled\n\
+ X?    ptt state\n");
+ Serial.write("\
  In    CW incr (1..9)\n\
  A,a   IambicA\n\
  B,b   IambicB\n\
@@ -514,26 +604,33 @@ void displayConfiguration()
 {
   Serial.write("\nnanoIO ");
   Serial.write(VERSION);
-  Serial.write("\nMode: ");
-  if (mode == FSK_MODE) Serial.write("FSK");
-  else Serial.write("CW");
-  Serial.write("\n");
-  Serial.write("FSK: "); Serial.write("Baud: "); Serial.print(baudrate);
-  Serial.write(", Mark ");
+  Serial.write("\nMode ");
+  if (mode == FSK_MODE)
+    Serial.write("FSK");
+  else
+    Serial.write("CW");
+  Serial.write("\nFSK");
+  Serial.write("\n  Baud "); Serial.print(baudrate);
+  Serial.write("\n  Mark ");
   if (mark == LOW) {
     Serial.write("LOW");
   } else {
     Serial.write("HIGH");
   }
+  Serial.write("\nCW");
+  Serial.write("\n  PC WPM "); Serial.print(CWstruc.cw_wpm);
+  Serial.write("\n  Paddle WPM "); Serial.print(CWstruc.key_wpm);
+  Serial.write("\n  dash/dot "); Serial.print(CWstruc.weight/100.0);
+  Serial.write("\n  incr "); Serial.print(CWstruc.incr);
+  Serial.write("\nKeyer mode ");
+  if (keyer.get_mode() == STRAIGHT) Serial.write("Straight");
+  else if (keyer.get_mode() == IAMBICA) Serial.write("IambicA");
+  else Serial.write("IambicB");
+#ifdef WITH_SPEED_POT
+  Serial.write("\nSpeed pot "); Serial.write(CWstruc.control ? "YES" : "NO");
+#endif
+  Serial.write("\nPTT "); Serial.write(CWstruc.ptt_enable ? "YES" : "NO");
   Serial.write("\n");
-  Serial.write("CW: "); Serial.write("WPM: "); Serial.print(CWstruc.cw_wpm);
-  Serial.write("/"); Serial.print(CWstruc.key_wpm);
-  Serial.write(", dash/dot "); Serial.print(CWstruc.weight);
-  Serial.write(", incr "); Serial.print(CWstruc.incr); Serial.write(", ");
-  if (keyer.get_mode() == STRAIGHT) Serial.print("Straight");
-  else if (keyer.get_mode() == IAMBICA) Serial.print("IambicA");
-  else Serial.print("IambicB");
-  Serial.write(" keyer\n");
 }
 
 /******************************************************************
@@ -543,7 +640,7 @@ void send_next_CW_char()
 {
   if (sendBufferBytes > 0) {
     byte chr = sendBufferArray[0];
-    for (int i = 0; i < sendBufferBytes; i++) {
+    for (int i = 0; i < sendBufferBytes - 1; i++) {
       sendBufferArray[i] = sendBufferArray[i + 1];
     }
     sendBufferBytes--;
@@ -678,7 +775,7 @@ void resetSendBuffer()
 */
 void addToSendBuffer(byte newByte)
 {
-  if (sendBufferBytes < SEND_BUFFER_SIZE) {
+  if (sendBufferBytes < SEND_BUFFER_SIZE - 1) {
     sendBufferBytes++;
     sendBufferArray[sendBufferBytes - 1] = newByte;
   }
@@ -719,11 +816,11 @@ byte getNextSendChar()
 //we don't need to send a shift character.  Just find the baudot equiv of the ascii symbol and return it.
       rVal = asciiToBaudot[asciiByte];
       lastAsciiByteSent = asciiByte;
-      sendBufferBytes--;
       if (sendBufferBytes > 0) {
-        for (int i = 0; i < sendBufferBytes; i++) {
+        for (int i = 0; i < sendBufferBytes - 1; i++) {
           sendBufferArray[i] = sendBufferArray[i + 1];
         }
+      sendBufferBytes--;
       }
       echo(asciiByte);
     }
@@ -786,7 +883,8 @@ void setPTT(byte b)
       // before sending the first start bit of the first character
       delay(pttLeadMillis);
     } else
-      digitalWrite(PTT_PIN, HIGH);
+      if (CWstruc.ptt_enable)
+        digitalWrite(PTT_PIN, HIGH);
   }
   else
   { // PTT OFF
@@ -803,7 +901,8 @@ void setPTT(byte b)
       digitalWrite(PTT_PIN, LOW);
       digitalWrite(CW_PIN, LOW);
     }
-    Serial.write("\ncmd:\n"); // Tells N1MM that TX is finished
+    if (mode == FSK_MODE)
+      Serial.write("\ncmd:\n"); // Tells N1MM that TX is finished
   }
   ptt = b;
 }
@@ -822,4 +921,3 @@ void echo(byte b)
 {
   Serial.write(b);
 }
-

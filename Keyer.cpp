@@ -18,6 +18,10 @@
 //  Free Software Foundation, Inc., 59 Temple Place, Suite 330,
 //  Boston, MA  02111-1307  USA
 //
+//1.0.0:  Initial release
+//1.0.1:  MORTTY Version 3 board support
+//1.1.0:  added support for WPM potentiometer; wiper on A0
+
 //======================================================================
 
 #include "Arduino.h"
@@ -72,12 +76,12 @@ void Keyer::calc_ratio()
 
 void Keyer::cw_pin(int pin)
 {
-	ptt_pin_ = pin;
+	cw_pin_ = pin;
 }
 
 void Keyer::ptt_pin(int pin)
 {
-	cw_pin_ = pin;
+	ptt_pin_ = pin;
 }
 
 void Keyer::set_mode(int md)
@@ -153,7 +157,8 @@ bool Keyer::do_paddles()
 //      break;
     case KEYED_PREP:                     // Assert key down, start timing
                                          // state shared for dit or dah
-      digitalWrite(ptt_pin_, HIGH);      // Enable PTT
+      if (CWstruc.ptt_enable)
+        digitalWrite(ptt_pin_, HIGH);    // Enable PTT
 //      tone(ST_Pin, ST_Freq);           // Turn the Sidetone on
       digitalWrite(cw_pin_, HIGH);       // Key the CW line
       ktimer += millis();                // set ktimer to interval end time
@@ -163,7 +168,7 @@ bool Keyer::do_paddles()
 //      break;
     case KEYED:                          // Wait for timer to expire
       if (millis() > ktimer) {           // are we at end of key down ?
-        digitalWrite(ptt_pin_, LOW);     // Disable PTT 
+        digitalWrite(ptt_pin_, LOW);   // Disable PTT 
 //        noTone(ST_Pin);                // Turn the Sidetone off
         digitalWrite(cw_pin_, LOW);      // Unkey the CW line
         ktimer = millis() + _space_len;  // inter-element time
@@ -192,5 +197,3 @@ bool Keyer::do_paddles()
 //      break;
   }
 }
-
-

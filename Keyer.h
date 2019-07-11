@@ -23,7 +23,9 @@
 //Revisions:
 //
 //1.0.0:  Initial release
-//
+//1.0.1:  MORTTY Version 3 board support
+//1.1.0:  added support for WPM potentiometer; wiper on A0
+
 //**********************************************************************
 
 
@@ -37,6 +39,18 @@
 #define IAMBICA 0
 #define IAMBICB 1
 #define STRAIGHT 2
+
+struct CWSTRUC {
+  int   cw_wpm;
+  int   weight;
+  int   incr;
+  int   key_wpm;
+  int   keyer_mode;
+  int   ptt_enable;
+  int   control; // 0 - computer; 1 - potentiometer
+};
+
+extern CWSTRUC CWstruc;
 
 class Keyer
 {
@@ -73,4 +87,3 @@ public:
 };
 
 #endif
-

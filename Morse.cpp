@@ -20,11 +20,16 @@
 //Revisions:
 //
 //1.0.0:  Initial release
+//1.0.1:  MORTTY Version 3 board support
+//1.1.0:  added support for WPM potentiometer; wiper on A0
 //
 //**********************************************************************
 
 #include "Arduino.h"
 #include "Morse.h"
+#include "Keyer.h"
+#include "config.h"
+#include "constants.h"
 
 // Morse conversion table from ASCII (offset by 33);
 // code is reverse binary for send method
@@ -196,6 +201,8 @@ void Morse::send(char c, byte pin)
 	}
 
 	// Main algorithm for each morse sign
+  if (CWstruc.ptt_enable)
+    digitalWrite(PTT_PIN, HIGH); // PTT ON
 	while (_p != 1) {
 		if (_p & 1)
 			dash(pin);
@@ -203,8 +210,7 @@ void Morse::send(char c, byte pin)
 			dit(pin);
 		_p = _p / 2;
 	}
+  digitalWrite(PTT_PIN, LOW);   // PTT OFF
 	// Letterspace
 	delay(2 * _spacelen);
 }
-
-

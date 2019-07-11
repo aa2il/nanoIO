@@ -20,7 +20,9 @@
 //Revisions:
 //
 //1.0.0:  Initial release
-//
+//1.0.1:  MORTTY Version 3 board support
+//1.1.0:  added support for WPM potentiometer; wiper on A0
+
 //**********************************************************************
 
 
