@@ -41,13 +41,31 @@ class Morse
 	private:
     byte _speed;   // Speed in WPM
 
-    int _dashlen;  // Length of dash
-    int _dotlen;   // Length of dot
-    int _spacelen; // Length of space
+    unsigned long _dash_len;  // Length of dash
+    unsigned int  _dash_msec;
+    unsigned int  _dash_usec;
+
+    unsigned long _dot_len;   // Length of dot
+    unsigned int  _dot_msec;
+    unsigned int  _dot_usec;
+
+    unsigned long _space_len; // Length of space
+    unsigned int  _space_msec;
+    unsigned int  _space_usec;
+
+    unsigned long _comp_len; // length of compensation interval
+    unsigned int  _comp_msec;
+    unsigned int  _comp_usec;
+
+    unsigned long _ltr_len;
+    unsigned int  _ltr_msec;
+    unsigned int  _ltr_usec;
+
     float _wt;     // weight 2.5 to 3.5; 3.0 nominal
 
 		void dash(byte pin);
 		void dit(byte pin);
     void calc_ratio();
+
 };
 #endif

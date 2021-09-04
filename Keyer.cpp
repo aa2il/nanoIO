@@ -28,8 +28,6 @@
 #include "TimerOne.h"
 #include "Keyer.h"
 
-//#define ST_Freq 600   // Set the Sidetone Frequency to 600 Hz
-
 //======================================================================
 //  keyerControl bit definitions
 //
@@ -47,11 +45,14 @@ Keyer::Keyer(int wpm, float weight)
 {
 	ptt_pin_ = PTT_PIN;
 	cw_pin_ = CW_PIN;
-// Setup outputs
+
+  // Setup outputs
 	pinMode(LP_in, INPUT);            // sets Left Paddle digital pin as input
 	pinMode(RP_in, INPUT);            // sets Right Paddle digital pin as input
 
-//  pinMode(ST_Pin, OUTPUT);          // Sets the Sidetone digital pin as output
+#ifdef SIDETONE
+  pinMode(ST_Pin, OUTPUT);          // Sets the Sidetone digital pin as output
+#endif  
 
 	digitalWrite(LP_in, HIGH);        // Enable pullup resistor on Left Paddle Input Pin
 	digitalWrite(RP_in, HIGH);        // Enable pullup resistor on Right Paddle Input Pin
@@ -69,7 +70,7 @@ Keyer::Keyer(int wpm, float weight)
 void Keyer::calc_ratio()
 {
   float w = (1 + _weight) / (_weight -1);
-  _space_len = (1200 / _speed);
+  _space_len = 9 * (1200 / _speed) / 10;
   _dotlen = _space_len * (w - 1);
   _dashlen =  (1 + w) * _space_len;
 }
@@ -112,22 +113,22 @@ bool Keyer::do_paddles()
 {
 	if (key_mode == STRAIGHT) { // Straight Key
 		if ((digitalRead(LP_in) == LOW) || (digitalRead(RP_in) == LOW)) {
-// Key from either paddle
+      // Key from either paddle
 			digitalWrite(ptt_pin_, HIGH);
 			digitalWrite(cw_pin_, HIGH);
-//      tone(ST_Pin, 600);
+      //tone(ST_Pin, 600);
 			return true;
 		} else {
 			digitalWrite(ptt_pin_, LOW);
 			digitalWrite(cw_pin_, LOW);
-//      noTone(ST_Pin);
+      //noTone(ST_Pin);
 		}
 		return false;
 	}
 
-// keyerControl contains processing flags and keyer mode bits
-// Supports Iambic A and B
-// State machine based, uses calls to millis() for timing.
+  // keyerControl contains processing flags and keyer mode bits
+  // Supports Iambic A and B
+  // State machine based, uses calls to millis() for timing.
   switch (keyerState) {
     case IDLE:      // Wait for direct or latched paddle press
       if ((digitalRead(LP_in) == LOW) || (digitalRead(RP_in) == LOW) || (keyerControl & 0x03)) {
@@ -159,8 +160,10 @@ bool Keyer::do_paddles()
                                          // state shared for dit or dah
       if (CWstruc.ptt_enable)
         digitalWrite(ptt_pin_, HIGH);    // Enable PTT
-//      tone(ST_Pin, ST_Freq);           // Turn the Sidetone on
       digitalWrite(cw_pin_, HIGH);       // Key the CW line
+#ifdef SIDETONE      
+      tone(ST_Pin, ST_Freq,ktimer);      // Turn the Sidetone on
+#endif      
       ktimer += millis();                // set ktimer to interval end time
       keyerControl &= ~(DIT_L + DAH_L);  // clear both paddle latch bits
       keyerState = KEYED;                // next state
@@ -168,9 +171,9 @@ bool Keyer::do_paddles()
 //      break;
     case KEYED:                          // Wait for timer to expire
       if (millis() > ktimer) {           // are we at end of key down ?
-        digitalWrite(ptt_pin_, LOW);   // Disable PTT 
-//        noTone(ST_Pin);                // Turn the Sidetone off
+        digitalWrite(ptt_pin_, LOW);     // Disable PTT 
         digitalWrite(cw_pin_, LOW);      // Unkey the CW line
+        //noTone(ST_Pin);                  // Turn the Sidetone off
         ktimer = millis() + _space_len;  // inter-element time
         keyerState = INTER_ELEMENT;      // next state
         return true;

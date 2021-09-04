@@ -23,6 +23,9 @@ Hardware requirements:
   4 620 ohm ¼ watt resistor (should work with 500 < R < 820 ohm)
   suitable connectors to interface to transceiver
 
+Library requirements:
+  TimerOne
+
 Default pin assignements for nanoIO circuit design:
    D9 / PIN 9  - spare
   D10 / PIN 10 - PTT

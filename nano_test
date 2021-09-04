@@ -1,0 +1,30 @@
+#! /bin/tcsh
+
+# Script to test nano IO interface
+
+###############################################################################
+
+set BAUD  = 38400 
+
+# Locate arduino device
+echo " "
+set DEVICE="/dev/serial/by-id/usb-1a86_USB2.0-Ser_-if00-port0"
+echo DEVICE=$DEVICE
+
+# This doesn't work
+#echo "TEST" > $DEVICE
+
+# This sort of works but doesn't add carriage return (horiz linefeed) 
+#echo "Starting screen - Use Ctrl-A k to exit ..."
+#echo screen $DEVICE $BAUD
+#screen $DEVICE $BAUD
+
+# This seems pretty good
+echo "\n******************************************************************"
+echo "\nStarting miniterm - Use Ctrl-] to exit ..."
+echo "\nUse ~~ to view list of keyer command, ~? to see current settings ...\n"
+echo "^ increases speed in incr, \| decreases speed"
+set CMD="miniterm $DEVICE $BAUD"
+echo CMD=$CMD
+$CMD
+

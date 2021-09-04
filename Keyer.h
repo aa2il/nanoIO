@@ -45,9 +45,11 @@ struct CWSTRUC {
   int   weight;
   int   incr;
   int   key_wpm;
+  int   corr_usec;
   int   keyer_mode;
   int   ptt_enable;
-  int   control; // 0 - computer; 1 - potentiometer
+  int   min_pot_wpm; // minimum pot wpm
+  int   rng_pot_wpm; // range pot wpm
 };
 
 extern CWSTRUC CWstruc;

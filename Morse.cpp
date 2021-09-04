@@ -141,13 +141,32 @@ Morse::Morse(int wpm, float weight)
 	calc_ratio();
 }
 
-// Calculate the length of dot, dash and silence
 void Morse::calc_ratio()
 {
-  float w = (1 + _wt) / (_wt -1);
-	_spacelen = (1200 / _speed);
-	_dotlen = _spacelen * (w - 1);
-	_dashlen =  (1 + w) * _spacelen;
+  float w = (_wt + 1) / (_wt -1);
+
+  _space_len  = 1200000L / _speed;
+  _space_usec = _space_len % 1000;
+  _space_msec = _space_len / 1000;
+
+  _dot_len = _space_len * (w - 1);
+  _dot_usec = _dot_len % 1000;
+  _dot_msec = _dot_len / 1000;
+
+  _dash_len =  _space_len * (w + 1);
+  _dash_usec = _dash_len % 1000;
+  _dash_msec = _dash_len / 1000;
+
+  _ltr_len  = _space_len * 2;
+  _ltr_usec = _ltr_len % 1000;
+  _ltr_msec = _ltr_len / 1000;
+
+  _comp_len = _space_len;
+  if (_comp_len > 50 * CWstruc.corr_usec)
+    _comp_len -= 50 * CWstruc.corr_usec;
+  _comp_usec = _comp_len % 1000;
+  _comp_msec = _comp_len / 1000;
+   
 }
 
 void Morse::weight(float wt)
@@ -164,18 +183,36 @@ void Morse::wpm(int spd)
 
 void Morse::dash(byte pin)
 {
-	digitalWrite(pin, HIGH);
-	delay(_dashlen);
+  digitalWrite(pin, HIGH);
+
+#ifdef SIDETONE  
+  tone(ST_Pin,ST_Freq,_dash_msec);
+#endif  
+    
+  delay(_dash_msec);
+  if (_dash_usec > 0) delayMicroseconds(_dash_usec);
+
 	digitalWrite(pin, LOW);
-	delay(_spacelen);
+  delay(_space_msec);
+	if (_space_usec > 0) delayMicroseconds(_space_usec);
+ 
 }
 
 void Morse::dit(byte pin)
 {
-	digitalWrite(pin, HIGH);
-	delay(_dotlen);
-	digitalWrite(pin, LOW);
-	delay(_spacelen);
+  digitalWrite(pin, HIGH);
+
+#ifdef SIDETONE    
+  tone(ST_Pin,ST_Freq,_dot_msec);
+#endif~~
+  
+
+  delay(_dot_msec);
+  if (_dot_usec > 0) delayMicroseconds(_dot_usec);
+
+  digitalWrite(pin, LOW);
+  delay(_space_msec);
+  if (_space_usec > 0) delayMicroseconds(_space_usec);
 }
 
 char lastc = 0;
@@ -187,11 +224,13 @@ void Morse::send(char c, byte pin)
 
 	// Send space
 	if (c == ' ') {
-		if (lastc == ' ')
-			delay(7 * _spacelen);
-		else
-			delay(4 * _spacelen);
-		return ;
+    int spc = 3;
+		if (lastc == ' ') spc = 6;
+    delay(spc * _space_msec);
+    if (_space_usec > 0) delayMicroseconds(spc * _space_usec);
+    delay(_comp_msec);
+    if (_comp_usec > 0) delayMicroseconds(_comp_usec);
+		return;
 	}
 
 	// Do a table lookup to get morse data
@@ -212,5 +251,6 @@ void Morse::send(char c, byte pin)
 	}
   digitalWrite(PTT_PIN, LOW);   // PTT OFF
 	// Letterspace
-	delay(2 * _spacelen);
+  delay(_ltr_msec);
+	if (_ltr_usec > 0) delayMicroseconds(_ltr_usec);
 }

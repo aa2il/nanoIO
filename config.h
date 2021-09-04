@@ -29,19 +29,32 @@
   //1.0.0:  Initial release
   //1.0.1:  MORTTY Version 3 board support
   //1.1.0:  added support for WPM potentiometer; wiper on A0
+  //1.3.0:  added additional FSK echo of control strings
+  //1.3.1:  enabled keyline inputs
+  //1.4.0:  MORTTY Version 4 board support
+  //1.4.1:  Modified usec corr usage
 
 ***********************************************************************/
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
-#define VERSION "1.1.0"
+#define VERSION "1.4.1"
+
+// Configure for target h/w by removing the comment on the appropriate line
+// ONLY one of the following:
 
 //#define MORTTY_V2
 //#define MORTTY_V3
+//#define MORTTY_V4
 //#define HA2OS
-#define W1HKJ
+//#define W1HKJ
+//#define N1MM
+#define AA2IL
 
-//#define WITH_SPEED_POT
+// Configure for target h/w by removing the comment if your Morrty has a 
+// speed pot:
+
+#define WITH_SPEED_POT
 
 //----------------------------------------------------------------------
 // values which may need to be changed depending on specific hardware
@@ -52,7 +65,7 @@
 // uncomment the desired h/w configuration
 // comment the others
 
-#ifdef MORTTY_V3
+#ifdef MORTTY_V2
 //----------------------------------------------------------------------
 // Configuration for MORTTY Version 2 circuit board
 //----------------------------------------------------------------------
@@ -72,6 +85,21 @@
 //----------------------------------------------------------------------
 #  define FSK_PIN 11
 #  define CW_PIN  12
+#  define PTT_PIN 13
+#  define ST_Pin 4      // Sidetone Output Pin on Pin 4
+// paddle input pins compatible with MORTTY board
+#  define RP_in 2       // Right Paddle Input on Pin 2
+#  define LP_in 5       // Left Paddle Input on Pin 5
+#  define DEFAULT_MODE CW_MODE
+#  define WPM_POT 0
+#endif
+
+#ifdef MORTTY_V4
+//----------------------------------------------------------------------
+// Configuration for MORTTY Version 4 circuit board
+//----------------------------------------------------------------------
+#  define FSK_PIN 12
+#  define CW_PIN  11
 #  define PTT_PIN 13
 #  define ST_Pin 4      // Sidetone Output Pin on Pin 4
 // paddle input pins compatible with MORTTY board
@@ -106,7 +134,29 @@
 //   paddle input pins
 #    define LP_in 2       // Left Paddle Input on Pin 2
 #    define RP_in 5       // Right Paddle Input on Pin 5
-#    define DEFAULT_MODE FSK_MODE
+#    define DEFAULT_MODE CW_MODE
+#endif
+
+#ifdef AA2IL
+//----------------------------------------------------------------------
+// Configuration for AA2IL - Of course I have to be different!
+//----------------------------------------------------------------------
+#    define FSK_PIN 12
+#    define CW_PIN  13    // CW keying pin to rig
+#    define PTT_PIN 10
+
+#    define LP_in 5       // Left Paddle Input Pin 
+#    define RP_in 3       // Right Paddle Input Pin
+#    define DEFAULT_MODE CW_MODE
+
+#    define SIDETONE 1    // Enable sidetone osc - eventually need to turn this into a run time param
+#    define ST_Pin 7      // Sidetone Output Pin
+#    define ST_Freq 700   // Set the Sidetone Frequency to 600 Hz
+
+#    undef WITH_SPEED_POT
+#    define DEFAULT_WPM 20
+
+#    define LOCK_SPEEDS              // Lock speed of keyer and paddles
 #endif
 
 #endif // __CONFIG_H_
