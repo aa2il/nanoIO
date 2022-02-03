@@ -7,6 +7,8 @@
 
   JBA - seems to work fine on Nano with arduino 1.8.10 & 13 but not 
         with version packaged with linux mint
+      - Sketch is uploaded by connecting USB cable to nano device & using arduino IDE.
+           -- Need to select "Arduino Nano" & "Old Bootloader" under tools
       - Open serial monitor to see what's happening 
            -- see sending_practice script
       - Send ~~<CR> to see a list of commands & ~? to see current settings
@@ -77,8 +79,9 @@
   to them at runtime.
 ********************************************************/
 
-long serialSpeed = 38400; //This is the speed for the serial
-//(more likely USB) connection, 8-N-1
+//This is the speed for the serial (more likely USB) connection, 8-N-1
+long serialSpeed = 38400; 
+//long serialSpeed = 19200; 
 
 // Not user selectable, but USOS behavior can be changed here.
 // We set this to TX extra shifts to be compatible with silly
@@ -192,7 +195,7 @@ void setup()
 // Tell N1MM we are in "RX" mode.
   Serial.write("\ncmd:\n");
 
-  morse.send('v', CW_PIN);
+  morse.send('e', CW_PIN);
 }
 
 /**
@@ -205,44 +208,53 @@ void setup()
 
 void do_serial()
 {
-// Read up to SEND_BUFFER_SIZE characters from the USB serial port
-
+  // Read up to SEND_BUFFER_SIZE characters from the USB serial port
   while ((Serial.available() > 0) && (sendBufferBytes < SEND_BUFFER_SIZE)) {
 
-// get incoming byte:
+    // get incoming byte:
     byte b = Serial.read();
+    //Serial.write(b); Serial.println(sendBufferBytes );
+    //Serial.print(SEND_BUFFER_SIZE); Serial.println(sendBufferBytes );
 
-// Process configuration string if we are in configuration mode
+    // Process configuration string if we are in configuration mode
     if (configurationMode) {
+      //Serial.print("\nThats weird! Config mode\n"); Serial.println(sendBufferBytes );
       echo(b);
       handleConfigurationCommand(b);
     }
     else  switch (b) {
-// test for configuration mode character
+        // test for configuration mode character
       case COMMAND_ESCAPE :
+        //Serial.print("\nThats weird! Entering config mode\n"); Serial.println(sendBufferBytes );
         configurationMode = true;
         echo(b);
         break;
-// check for TX abort character.  This immediately kills the
-// transmitter and dumps anything remaining in the buffer.
+        // check for TX abort character.  This immediately kills the
+        // transmitter and dumps anything remaining in the buffer.
       case TX_ABORT : 
+        //Serial.print("\nThats weird! TX ABORT\n"); Serial.println(sendBufferBytes );
         echo(b);
         setPTT(false);
         resetSendBuffer();
         endWhenBufferEmpty = true;
         break;
       case TX_ON : 
+        //Serial.print("\nThats weird! TX ON\n"); Serial.println(sendBufferBytes );
         echo(b);
         endWhenBufferEmpty = false;
         setPTT(true);
         break;
       case TX_END : 
+        //Serial.print("\nThats weird! TX END\n"); Serial.println(sendBufferBytes );
         echo(b);
         endWhenBufferEmpty = true;
         break;
       default :
-// add character (b) to send buffer
-        if (b == 0) break;
+        // add character (b) to send buffer
+        if (b == 0) {
+          //Serial.print("\nThats weird! b=0\n"); Serial.println(sendBufferBytes );
+          break;
+        }
         if (mode == FSK_MODE)
           addToSendBuffer(b);
         else {
@@ -255,7 +267,7 @@ void do_serial()
       }
   }  // end while (Serial.available...)
 
-// If the ISR fired we need may need to bit-bang something out the FSK port
+  // If the ISR fired we need may need to bit-bang something out the FSK port
   if (mode == FSK_MODE) {
     if (isrFlag) {
       processHalfBit();
@@ -732,7 +744,10 @@ void send_next_CW_char()
       return;
     }
     morse.send(chr, CW_PIN);
+
     echo(chr);
+    //Serial.write(chr); Serial.println(sendBufferBytes );
+    
   }
 }
 
@@ -886,11 +901,11 @@ byte getNextSendChar()
               (currentShiftState != LTRS_SHIFT) && 
               requiresFigures(asciiByte) && 
               (sendingChar == 0x04) ) {
-//echo('^');
+      //echo('^');
       return FIGS_SHIFT;
     }
     else {
-//we don't need to send a shift character.  Just find the baudot equiv of the ascii symbol and return it.
+      //we don't need to send a shift character.  Just find the baudot equiv of the ascii symbol and return it.
       rVal = asciiToBaudot[asciiByte];
       lastAsciiByteSent = asciiByte;
       if (sendBufferBytes > 0) {
@@ -899,15 +914,15 @@ byte getNextSendChar()
         }
       sendBufferBytes--;
       }
-//      echo(asciiByte);
+      //      echo(asciiByte);
     }
   }
   else {
-// the buffer is empty
+    // the buffer is empty
     if (endWhenBufferEmpty) {
       rVal = TX_END_FLAG;  // signals to stop the TX
     } else {
-// slow typist?
+      // slow typist?
       if (currentShiftState == SHIFT_UNKNOWN) {
         rVal = LTRS_SHIFT;  //send LTRS idle if we haven't sent anything on this TX
       }
@@ -989,6 +1004,7 @@ void setPTT(byte b)
 
 void enable_tune()
 {
+  Serial.write("\nNANO Enable Tune\n");
   digitalWrite(PTT_PIN, HIGH);
   digitalWrite(CW_PIN, HIGH);
 }
@@ -1001,3 +1017,13 @@ void echo(byte b)
 {
   Serial.write(b);
 }
+
+
+// This routine is called when there is serial data avialable
+#if 0
+void serialEvent() {
+  Serial.print("\nNANO serialEvent - available=");
+  Serial.println( Serial.available() );
+}
+#endif
+

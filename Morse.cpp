@@ -50,7 +50,7 @@ const  byte _ascii_to_morse[] = {
 	0b00101101,  // + <KN>
 	0b01110011,  // ,
 	0b00110001,  // - <BT>
-	0b00101010,  // .
+	0b01101010,  // . 
 	0b00101001,  // /
 	0b00111111,  // 0
 	0b00111110,  // 1
@@ -219,38 +219,38 @@ char lastc = 0;
 
 void Morse::send(char c, byte pin)
 {
-	byte _i;
-	byte _p;
+  byte _i;
+  byte _p;
 
-	// Send space
-	if (c == ' ') {
+  // Send space
+  if (c == ' ') {
     int spc = 3;
-		if (lastc == ' ') spc = 6;
+    if (lastc == ' ') spc = 6;
     delay(spc * _space_msec);
     if (_space_usec > 0) delayMicroseconds(spc * _space_usec);
     delay(_comp_msec);
     if (_comp_usec > 0) delayMicroseconds(_comp_usec);
-		return;
-	}
+    return;
+  }
 
-	// Do a table lookup to get morse data
-	else {
-		_i = ((byte) c) - 33;
-		_p = _ascii_to_morse[_i];
-	}
+  // Do a table lookup to get morse data
+  else {
+    _i = ((byte) c) - 33;
+    _p = _ascii_to_morse[_i];
+  }
 
-	// Main algorithm for each morse sign
+  // Main algorithm for each morse sign
   if (CWstruc.ptt_enable)
     digitalWrite(PTT_PIN, HIGH); // PTT ON
-	while (_p != 1) {
-		if (_p & 1)
-			dash(pin);
-		else
-			dit(pin);
-		_p = _p / 2;
-	}
+  while (_p != 1) {
+    if (_p & 1)
+      dash(pin);
+    else
+      dit(pin);
+    _p = _p / 2;
+  }
   digitalWrite(PTT_PIN, LOW);   // PTT OFF
-	// Letterspace
+  // Letterspace
   delay(_ltr_msec);
-	if (_ltr_usec > 0) delayMicroseconds(_ltr_usec);
+  if (_ltr_usec > 0) delayMicroseconds(_ltr_usec);
 }
