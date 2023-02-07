@@ -31,6 +31,8 @@
 
 #include "Arduino.h"
 
+char elements2char(int b);  
+
 class Morse
 {
 	public:
@@ -38,6 +40,7 @@ class Morse
 		void send(char c, byte pin);
 		void weight(float wt);
 		void wpm(int spd);
+
 	private:
     byte _speed;   // Speed in WPM
 
@@ -66,6 +69,5 @@ class Morse
 		void dash(byte pin);
 		void dit(byte pin);
     void calc_ratio();
-
 };
 #endif

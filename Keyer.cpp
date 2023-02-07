@@ -26,6 +26,7 @@
 
 #include "Arduino.h"
 #include "TimerOne.h"
+#include "Morse.h"
 #include "Keyer.h"
 
 //======================================================================
@@ -109,28 +110,62 @@ void Keyer::update_PaddleLatch()
 	}
 }
 
+
 bool Keyer::do_paddles()
 {
-	if (key_mode == STRAIGHT) { // Straight Key
-		if ((digitalRead(LP_in) == LOW) || (digitalRead(RP_in) == LOW)) {
+#ifdef ECHO_PRACTICE
+  static unsigned long tdown=0,ch=0,tel=0;
+  unsigned long t0,dt;
+  static int element,bit=1;
+#endif
+#ifdef ECHO_PRACTICE99
+  Serial.write("\nspace len="); Serial.print(_space_len);
+  Serial.write("\tdit len="); Serial.print(_dotlen);
+  Serial.write("\tdah len="); Serial.print(_dashlen);
+#endif      
+  
+  if (key_mode == STRAIGHT) { // Straight Key
+    if ((digitalRead(LP_in) == LOW) || (digitalRead(RP_in) == LOW)) {
       // Key from either paddle
-			digitalWrite(ptt_pin_, HIGH);
-			digitalWrite(cw_pin_, HIGH);
-      //tone(ST_Pin, 600);
-			return true;
-		} else {
-			digitalWrite(ptt_pin_, LOW);
-			digitalWrite(cw_pin_, LOW);
-      //noTone(ST_Pin);
-		}
-		return false;
-	}
+      digitalWrite(ptt_pin_, HIGH);
+      digitalWrite(cw_pin_, HIGH);
+#ifdef SIDETONE      
+      tone(ST_Pin, ST_Freq);      // Turn the Sidetone on
+      //tone(ST_Pin, ST_Freq,ktimer);
+#endif      
+      return true;
+    } else {
+      digitalWrite(ptt_pin_, LOW);
+      digitalWrite(cw_pin_, LOW);
+#ifdef SIDETONE      
+      noTone(ST_Pin);      // Turn the Sidetone off
+#endif      
+    }
+    return false;
+  }
 
   // keyerControl contains processing flags and keyer mode bits
   // Supports Iambic A and B
   // State machine based, uses calls to millis() for timing.
   switch (keyerState) {
     case IDLE:      // Wait for direct or latched paddle press
+#ifdef ECHO_PRACTICE
+      dt=millis()-tdown;
+      if( dt>10*_space_len ) {
+        if( bit>1 ) {
+          ch |= bit;
+          char c=elements2char(ch);
+          //Serial.write("\nIDLE="); Serial.print(ch,BIN);
+          //Serial.write("\t");
+          Serial.print(c);
+          //Serial.write("\nIDLE="); Serial.print(1,BIN);
+          //Serial.write("\t");
+          Serial.print(' ');
+        }
+        ch = 0;
+        bit=1;
+      }
+#endif      
       if ((digitalRead(LP_in) == LOW) || (digitalRead(RP_in) == LOW) || (keyerControl & 0x03)) {
         update_PaddleLatch();
         keyerState = CHK_DIT;
@@ -138,29 +173,69 @@ bool Keyer::do_paddles()
       }
       return false;
 //      break;
+      
     case CHK_DIT:      // See if the dit paddle was pressed
       if (keyerControl & DIT_L) {
         keyerControl |= DIT_PROC;
         ktimer = _dotlen;
         keyerState = KEYED_PREP;
+#ifdef ECHO_PRACTICE
+        element=0;
+#endif      
         return true;
       }  // fall through
         keyerState = CHK_DAH;
+        
     case CHK_DAH:      // See if dah paddle was pressed
       if (keyerControl & DAH_L) {
         ktimer = _dashlen;
         keyerState = KEYED_PREP;
+#ifdef ECHO_PRACTICE
+        element=1;
+#endif      
         return true;
       } else {
         keyerState = IDLE;
         return false;
       }
 //      break;
+      
     case KEYED_PREP:                     // Assert key down, start timing
                                          // state shared for dit or dah
       if (CWstruc.ptt_enable)
         digitalWrite(ptt_pin_, HIGH);    // Enable PTT
       digitalWrite(cw_pin_, HIGH);       // Key the CW line
+#ifdef ECHO_PRACTICE
+      t0=tdown;
+      tdown = millis();
+      dt=tdown-t0;
+      if( dt>tel + 2*_space_len ) {
+        if( bit>1 ) {
+          ch |= bit;
+          char c=elements2char(ch);
+          //Serial.write("\nSENT="); Serial.print(ch,BIN); 
+          //Serial.write("\t");
+          Serial.print(c);
+          if( dt>tel + 4*_space_len ) {
+            //Serial.write("\nSENT="); Serial.print(1,BIN); 
+            //Serial.write("\t");
+            Serial.print(' ');
+          }
+        }
+        ch = 0;
+        bit=1;
+      }
+      tel=ktimer;
+      //ch = 2*ch+element;
+      ch |= element*bit;
+      bit*=2;
+      //Serial.write("\ntdown"); Serial.print(tdown);
+      //Serial.write("\nel="); Serial.print(element);
+      //Serial.write("\tbit="); Serial.print(bit);
+      //Serial.write("\ttel="); Serial.print(tel);
+      //Serial.write("\tdt="); Serial.print(dt);
+      //Serial.write("\tch="); Serial.print(ch);
+#endif      
 #ifdef SIDETONE      
       tone(ST_Pin, ST_Freq,ktimer);      // Turn the Sidetone on
 #endif      

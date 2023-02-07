@@ -21,6 +21,10 @@
         sendBufferBytes that we can check.  Perhaps we can add a command
         to display this as well?
 
+   Notes:
+      - Need to close miniterm before trying to upload code.
+      - Might also have to disconnect SDRplay before trying to upload code (not sure).
+
 ***********************************************************************
 
   CW / FSK interface sketch for use either stand alone or with fldigi.
@@ -1026,4 +1030,3 @@ void serialEvent() {
   Serial.println( Serial.available() );
 }
 #endif
-

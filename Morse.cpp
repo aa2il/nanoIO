@@ -133,6 +133,22 @@ const  byte _ascii_to_morse[] = {
 	0b00000001,  // tilde
 };
 
+
+#ifdef ECHO_PRACTICE
+char elements2char(int b)
+{
+  int i,j;
+  //Serial.write("\nb="); Serial.print(b,BIN);
+  for(i=0;i<94;i++) {
+    if( b==_ascii_to_morse[i] ) {
+      //Serial.write("\ti=");  Serial.print(i);      
+      //Serial.write("\tchar=");  Serial.print(char(i+33));      
+      return char(i+33);
+    }
+  }
+}
+#endif
+
 Morse::Morse(int wpm, float weight)
 {
 	// Save values for later use

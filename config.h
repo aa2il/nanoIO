@@ -156,7 +156,9 @@
 #    undef WITH_SPEED_POT
 #    define DEFAULT_WPM 20
 
-#    define LOCK_SPEEDS              // Lock speed of keyer and paddles
+#    define ECHO_PRACTICE
+
+//#    define LOCK_SPEEDS              // Lock speed of keyer and paddles
 #endif
 
 #endif // __CONFIG_H_
