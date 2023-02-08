@@ -111,18 +111,67 @@ void Keyer::update_PaddleLatch()
 }
 
 
+#ifdef ECHO_PRACTICE
+static unsigned long tdown=0,ch=0,tel=0;
+static int element,bit=1;
+#define MAX_TIMES 100  
+static long times[MAX_TIMES],ntimes=0;
+
+
+void Keyer::echo_timing(int flush)
+{
+  unsigned long t0,dt,thresh;
+  int i;
+
+  // Determine time since last key down
+  if(flush) {
+    dt = millis()-tdown;
+      thresh=10*_space_len;
+  } else{
+    t0=tdown;
+    tdown = millis();
+    dt=tdown-t0;
+    times[ntimes++] = 2*tdown+element;
+    if(ntimes>=MAX_TIMES) ntimes=0;
+    thresh=tel + 2*_space_len;
+  }
+
+  // Are we past the trailing element space?
+  if( dt>thresh ) {
+    if( bit>1 ) {
+      ch |= bit;
+      char c=elements2char(ch);
+      //Serial.write("\nSENT="); Serial.print(ch,BIN); 
+      //Serial.write("\t");
+      Serial.print(c);
+      if( (dt>tel + 4*_space_len) || flush) {
+        //Serial.write("\nSENT="); Serial.print(1,BIN); 
+        //Serial.write("\t");
+        Serial.print(' ');
+      }
+
+        if(flush) {
+          Serial.write("\n");
+          for(i=0;i<ntimes; i++) {
+            Serial.print(times[i]);
+            Serial.print(' ');
+          }
+          Serial.write("\n");
+          ntimes=0;
+        }
+        
+      }
+    ch = 0;
+    bit=1;
+  }
+  
+}
+#endif      
+
+
+
 bool Keyer::do_paddles()
 {
-#ifdef ECHO_PRACTICE
-  static unsigned long tdown=0,ch=0,tel=0;
-  unsigned long t0,dt;
-  static int element,bit=1;
-#endif
-#ifdef ECHO_PRACTICE99
-  Serial.write("\nspace len="); Serial.print(_space_len);
-  Serial.write("\tdit len="); Serial.print(_dotlen);
-  Serial.write("\tdah len="); Serial.print(_dashlen);
-#endif      
   
   if (key_mode == STRAIGHT) { // Straight Key
     if ((digitalRead(LP_in) == LOW) || (digitalRead(RP_in) == LOW)) {
@@ -150,21 +199,7 @@ bool Keyer::do_paddles()
   switch (keyerState) {
     case IDLE:      // Wait for direct or latched paddle press
 #ifdef ECHO_PRACTICE
-      dt=millis()-tdown;
-      if( dt>10*_space_len ) {
-        if( bit>1 ) {
-          ch |= bit;
-          char c=elements2char(ch);
-          //Serial.write("\nIDLE="); Serial.print(ch,BIN);
-          //Serial.write("\t");
-          Serial.print(c);
-          //Serial.write("\nIDLE="); Serial.print(1,BIN);
-          //Serial.write("\t");
-          Serial.print(' ');
-        }
-        ch = 0;
-        bit=1;
-      }
+      echo_timing(1);
 #endif      
       if ((digitalRead(LP_in) == LOW) || (digitalRead(RP_in) == LOW) || (keyerControl & 0x03)) {
         update_PaddleLatch();
@@ -206,34 +241,10 @@ bool Keyer::do_paddles()
         digitalWrite(ptt_pin_, HIGH);    // Enable PTT
       digitalWrite(cw_pin_, HIGH);       // Key the CW line
 #ifdef ECHO_PRACTICE
-      t0=tdown;
-      tdown = millis();
-      dt=tdown-t0;
-      if( dt>tel + 2*_space_len ) {
-        if( bit>1 ) {
-          ch |= bit;
-          char c=elements2char(ch);
-          //Serial.write("\nSENT="); Serial.print(ch,BIN); 
-          //Serial.write("\t");
-          Serial.print(c);
-          if( dt>tel + 4*_space_len ) {
-            //Serial.write("\nSENT="); Serial.print(1,BIN); 
-            //Serial.write("\t");
-            Serial.print(' ');
-          }
-        }
-        ch = 0;
-        bit=1;
-      }
+      echo_timing(0);
       tel=ktimer;
-      //ch = 2*ch+element;
       ch |= element*bit;
       bit*=2;
-      //Serial.write("\ntdown"); Serial.print(tdown);
-      //Serial.write("\nel="); Serial.print(element);
-      //Serial.write("\tbit="); Serial.print(bit);
-      //Serial.write("\ttel="); Serial.print(tel);
-      //Serial.write("\tdt="); Serial.print(dt);
       //Serial.write("\tch="); Serial.print(ch);
 #endif      
 #ifdef SIDETONE      

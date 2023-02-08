@@ -68,23 +68,24 @@ private:
   int _space_len; // Length of space
   float _weight;
 
-	char keyerControl;
-	char keyerState;
-	int  key_mode;
+  char keyerControl;
+  char keyerState;
+  int  key_mode;
 
   void calc_ratio();
-	void update_PaddleLatch();
-
+  void update_PaddleLatch();
+  void echo_timing(int flush);
+  
 public:
-	Keyer(int wpm, float _weight);
-	void cw_pin(int pin);
-	void ptt_pin(int pin);
-	void wpm(int spd);
-	void set_mode(int md);
+  Keyer(int wpm, float _weight);
+  void cw_pin(int pin);
+  void ptt_pin(int pin);
+  void wpm(int spd);
+  void set_mode(int md);
   int  get_mode() { return key_mode; }
   void set__weight();
- 
-	bool do_paddles();
+  
+  bool do_paddles();
 
 };
 
