@@ -84,7 +84,7 @@
 ********************************************************/
 
 //This is the speed for the serial (more likely USB) connection, 8-N-1
-long serialSpeed = 38400; 
+long serialSpeed = 3*38400; 
 //long serialSpeed = 19200; 
 
 // Not user selectable, but USOS behavior can be changed here.

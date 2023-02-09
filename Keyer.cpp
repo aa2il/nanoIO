@@ -112,31 +112,53 @@ void Keyer::update_PaddleLatch()
 
 
 #ifdef ECHO_PRACTICE
-static unsigned long tdown=0,ch=0,tel=0;
+static unsigned long tup=0,ch=0;
 static int element,bit=1;
-#define MAX_TIMES 100  
-static long times[MAX_TIMES],ntimes=0;
+
+#define MAX_TIMES 0  
+//#define MAX_TIMES 100
+#if MAX_TIMES>0
+//static long times[MAX_TIMES],ntimes=0;
+static int times[MAX_TIMES],ntimes=0;
+
+void print_times()
+{
+  int i;
+  
+  Serial.write(" \n ");
+  for(i=0;i<ntimes; i++) {
+    Serial.print(times[i]);
+    Serial.print(' ');
+  }
+  //Serial.write("\n ");
+  ntimes=0;
+}  
+#endif
 
 
 void Keyer::echo_timing(int flush)
 {
   unsigned long t0,dt,thresh;
-  int i;
 
   // Determine time since last key down
+  dt = millis()-tup;
   if(flush) {
-    dt = millis()-tdown;
-      thresh=10*_space_len;
+    thresh=7*_space_len;       // Char spacing is 3 dits & Word spacing is 7 dits
   } else{
-    t0=tdown;
-    tdown = millis();
-    dt=tdown-t0;
-    times[ntimes++] = 2*tdown+element;
-    if(ntimes>=MAX_TIMES) ntimes=0;
-    thresh=tel + 2*_space_len;
+    thresh=2*_space_len;       // Element spacing is 1 dit
+
+#if MAX_TIMES>0
+    if(ntimes<MAX_TIMES)
+      times[ntimes++] = dt;
+    if(ntimes>=MAX_TIMES) {
+      print_times();       // Too slow
+      ntimes=0;
+    }
+#endif
+    
   }
 
-  // Are we past the trailing element space?
+  // Are we past the element spacing?
   if( dt>thresh ) {
     if( bit>1 ) {
       ch |= bit;
@@ -144,23 +166,23 @@ void Keyer::echo_timing(int flush)
       //Serial.write("\nSENT="); Serial.print(ch,BIN); 
       //Serial.write("\t");
       Serial.print(c);
-      if( (dt>tel + 4*_space_len) || flush) {
+
+      // Are we past the word spacing?
+      if( (dt>5*_space_len) || flush) {
         //Serial.write("\nSENT="); Serial.print(1,BIN); 
         //Serial.write("\t");
         Serial.print(' ');
-      }
 
         if(flush) {
-          Serial.write("\n");
-          for(i=0;i<ntimes; i++) {
-            Serial.print(times[i]);
-            Serial.print(' ');
-          }
-          Serial.write("\n");
-          ntimes=0;
+#if MAX_TIMES>0
+          print_times();
+#else          
+          Serial.write("\n ");
+#endif
         }
-        
+      
       }
+    }
     ch = 0;
     bit=1;
   }
@@ -242,7 +264,6 @@ bool Keyer::do_paddles()
       digitalWrite(cw_pin_, HIGH);       // Key the CW line
 #ifdef ECHO_PRACTICE
       echo_timing(0);
-      tel=ktimer;
       ch |= element*bit;
       bit*=2;
       //Serial.write("\tch="); Serial.print(ch);
@@ -254,9 +275,12 @@ bool Keyer::do_paddles()
       keyerControl &= ~(DIT_L + DAH_L);  // clear both paddle latch bits
       keyerState = KEYED;                // next state
       return true;
-//      break;
+
     case KEYED:                          // Wait for timer to expire
       if (millis() > ktimer) {           // are we at end of key down ?
+#ifdef ECHO_PRACTICE
+        tup = millis();
+#endif      
         digitalWrite(ptt_pin_, LOW);     // Disable PTT 
         digitalWrite(cw_pin_, LOW);      // Unkey the CW line
         //noTone(ST_Pin);                  // Turn the Sidetone off
@@ -267,7 +291,6 @@ bool Keyer::do_paddles()
       else if (key_mode == IAMBICB)     // Iambic B Mode ?
         update_PaddleLatch();           // yes, early paddle latch in Iambic B mode
       return true;
-//      break;
 
     case INTER_ELEMENT:                 // Insert time between dits/dahs
       update_PaddleLatch();             // latch paddle state

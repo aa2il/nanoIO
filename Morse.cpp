@@ -139,6 +139,8 @@ char elements2char(int b)
 {
   int i,j;
   //Serial.write("\nb="); Serial.print(b,BIN);
+
+  // Find the dit/dah pattern in the table
   for(i=0;i<94;i++) {
     if( b==_ascii_to_morse[i] ) {
       //Serial.write("\ti=");  Serial.print(i);      
@@ -146,6 +148,9 @@ char elements2char(int b)
       return char(i+33);
     }
   }
+
+  // No match so return an error
+  return '~';
 }
 #endif
 
