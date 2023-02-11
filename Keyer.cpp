@@ -44,23 +44,25 @@ enum KSTYPE {IDLE, CHK_DIT, CHK_DAH, KEYED_PREP, KEYED, INTER_ELEMENT };
 
 Keyer::Keyer(int wpm, float weight)
 {
-	ptt_pin_ = PTT_PIN;
-	cw_pin_ = CW_PIN;
+  ptt_pin_ = PTT_PIN;
+  cw_pin_ = CW_PIN;
 
   // Setup outputs
-	pinMode(LP_in, INPUT);            // sets Left Paddle digital pin as input
-	pinMode(RP_in, INPUT);            // sets Right Paddle digital pin as input
+  pinMode(LP_in, INPUT);            // sets Left Paddle digital pin as input
+  pinMode(RP_in, INPUT);            // sets Right Paddle digital pin as input
+  pinMode(SK_in, INPUT);            // sets Straight Key digital pin as input
 
 #ifdef SIDETONE
   pinMode(ST_Pin, OUTPUT);          // Sets the Sidetone digital pin as output
 #endif  
 
-	digitalWrite(LP_in, HIGH);        // Enable pullup resistor on Left Paddle Input Pin
-	digitalWrite(RP_in, HIGH);        // Enable pullup resistor on Right Paddle Input Pin
-
-	keyerState = IDLE;
-	keyerControl = 0;
-	key_mode = IAMBICA;
+  digitalWrite(LP_in, HIGH);        // Enable pullup resistor on Left Paddle Input Pin
+  digitalWrite(RP_in, HIGH);        // Enable pullup resistor on Right Paddle Input Pin
+  digitalWrite(SK_in, HIGH);        // Enable pullup resistor on Straight Key Input Pin
+  
+  keyerState = IDLE;
+  keyerControl = 0;
+  key_mode = IAMBICA;
   _weight = weight;
 
   _speed = wpm;
@@ -138,53 +140,65 @@ void print_times()
 
 void Keyer::echo_timing(int flush)
 {
-  unsigned long t0,dt,thresh;
+  unsigned long t0,dt;
+  static int need_space=0,need_eol=0;
 
-  // Determine time since last key down
+  // Determine time since the key up from the last element
   dt = millis()-tup;
-  if(flush) {
-    thresh=7*_space_len;       // Char spacing is 3 dits & Word spacing is 7 dits
-  } else{
-    thresh=2*_space_len;       // Element spacing is 1 dit
-
 #if MAX_TIMES>0
+  if(flush==0) {
     if(ntimes<MAX_TIMES)
       times[ntimes++] = dt;
     if(ntimes>=MAX_TIMES) {
       print_times();       // Too slow
       ntimes=0;
     }
-#endif
-    
   }
+#endif
 
-  // Are we past the element spacing?
-  if( dt>thresh ) {
+  // Element spacing is 1 dit
+  // Char spacing is 3 dits
+  // Word spacing is 7 dits
+  // If the spacing is over 10 dits, we throw in a linefeed for good measure
+  
+  // Are we past the element spacing? 
+  if( dt>2*_space_len) {
+
+    // Have any elements been sent?
     if( bit>1 ) {
       ch |= bit;
       char c=elements2char(ch);
       //Serial.write("\nSENT="); Serial.print(ch,BIN); 
       //Serial.write("\t");
       Serial.print(c);
-
-      // Are we past the word spacing?
-      if( (dt>5*_space_len) || flush) {
-        //Serial.write("\nSENT="); Serial.print(1,BIN); 
-        //Serial.write("\t");
-        Serial.print(' ');
-
-        if(flush) {
-#if MAX_TIMES>0
-          print_times();
-#else          
-          Serial.write("\n ");
-#endif
-        }
+      need_space=1;
       
+      // Get ready for next char
+      ch=0;
+      bit=1;
+    }
+    
+    // Are we past the word spacing and not yet sent a space?
+    if( dt>5*_space_len & need_space) {
+      //Serial.write("\nSENT="); Serial.print(1,BIN); 
+      //Serial.write("\t");
+      Serial.print(' ');
+      need_space=0;
+      need_eol=1;
+    }
+      
+    // Are we past the line spacing and not yet sent a line feed?
+    if( dt>10*_space_len & need_eol) {
+      need_eol=0;
+      if(flush) {
+#if MAX_TIMES>0
+        print_times();
+#else          
+        Serial.write("\n ");
+#endif
       }
     }
-    ch = 0;
-    bit=1;
+    
   }
   
 }
@@ -194,7 +208,35 @@ void Keyer::echo_timing(int flush)
 
 bool Keyer::do_paddles()
 {
+
+  // Handle straight key  
+#ifdef SK_in
+  static int sk=0;
   
+  // Check Straight Key connected to its own pin
+  // Doing it this way allows both paddles and straight key to work together
+  if (digitalRead(SK_in) == LOW) {
+    sk=1;
+    digitalWrite(ptt_pin_, HIGH);
+    digitalWrite(cw_pin_, HIGH);
+#ifdef SIDETONE      
+    tone(ST_Pin, ST_Freq);      // Turn the Sidetone on
+#endif      
+    return true;
+  } else if(sk) {
+    sk=0;
+    digitalWrite(ptt_pin_, LOW);
+    digitalWrite(cw_pin_, LOW);
+#ifdef SIDETONE      
+    noTone(ST_Pin);      // Turn the Sidetone off
+#endif      
+    return true;
+  }
+
+#else
+
+  // Original nano IO connected straight key to either of the paddle pins
+  // and had to put into STRAIGHT mode 
   if (key_mode == STRAIGHT) { // Straight Key
     if ((digitalRead(LP_in) == LOW) || (digitalRead(RP_in) == LOW)) {
       // Key from either paddle
@@ -202,7 +244,6 @@ bool Keyer::do_paddles()
       digitalWrite(cw_pin_, HIGH);
 #ifdef SIDETONE      
       tone(ST_Pin, ST_Freq);      // Turn the Sidetone on
-      //tone(ST_Pin, ST_Freq,ktimer);
 #endif      
       return true;
     } else {
@@ -214,6 +255,8 @@ bool Keyer::do_paddles()
     }
     return false;
   }
+  
+#endif  
 
   // keyerControl contains processing flags and keyer mode bits
   // Supports Iambic A and B
@@ -229,7 +272,6 @@ bool Keyer::do_paddles()
         return true;
       }
       return false;
-//      break;
       
     case CHK_DIT:      // See if the dit paddle was pressed
       if (keyerControl & DIT_L) {
@@ -255,7 +297,6 @@ bool Keyer::do_paddles()
         keyerState = IDLE;
         return false;
       }
-//      break;
       
     case KEYED_PREP:                     // Assert key down, start timing
                                          // state shared for dit or dah
@@ -283,7 +324,6 @@ bool Keyer::do_paddles()
 #endif      
         digitalWrite(ptt_pin_, LOW);     // Disable PTT 
         digitalWrite(cw_pin_, LOW);      // Unkey the CW line
-        //noTone(ST_Pin);                  // Turn the Sidetone off
         ktimer = millis() + _space_len;  // inter-element time
         keyerState = INTER_ELEMENT;      // next state
         return true;
@@ -306,6 +346,6 @@ bool Keyer::do_paddles()
         }
       }
       return true;
-//      break;
+
   }
 }

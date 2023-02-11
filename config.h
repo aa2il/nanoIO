@@ -145,6 +145,7 @@
 #    define CW_PIN  13    // CW keying pin to rig
 #    define PTT_PIN 10
 
+#    define SK_in 9       // Straight Key Input Pin 
 #    define LP_in 5       // Left Paddle Input Pin 
 #    define RP_in 3       // Right Paddle Input Pin
 #    define DEFAULT_MODE CW_MODE
