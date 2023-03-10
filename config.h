@@ -49,12 +49,16 @@
 //#define HA2OS
 //#define W1HKJ
 //#define N1MM
+#if defined(ESP32)
+#define AA2IL_NODE_MCU
+#else
 #define AA2IL
+#endif
 
 // Configure for target h/w by removing the comment if your Morrty has a 
 // speed pot:
 
-#define WITH_SPEED_POT
+// #define WITH_SPEED_POT
 
 //----------------------------------------------------------------------
 // values which may need to be changed depending on specific hardware
@@ -142,7 +146,7 @@
 // Configuration for AA2IL - Of course I have to be different!
 //----------------------------------------------------------------------
 #    define FSK_PIN 12
-#    define CW_PIN  13    // CW keying pin to rig
+#    define CW_PIN  13    // CW keying pin to rig same as red LED
 #    define PTT_PIN 10
 
 #    define SK_in 9       // Straight Key Input Pin 
@@ -152,6 +156,31 @@
 
 #    define SIDETONE 1    // Enable sidetone osc - eventually need to turn this into a run time param
 #    define ST_Pin 7      // Sidetone Output Pin
+#    define ST_Freq 700   // Set the Sidetone Frequency to 600 Hz
+
+#    undef WITH_SPEED_POT
+#    define DEFAULT_WPM 20
+
+#    define ECHO_PRACTICE
+
+//#    define LOCK_SPEEDS              // Lock speed of keyer and paddles
+#endif
+
+#ifdef AA2IL_NODE_MCU
+//----------------------------------------------------------------------
+// Configuration for ESP32 NODE MCU - In Progress
+//----------------------------------------------------------------------
+#    define FSK_PIN 17
+#    define CW_PIN  2      // CW keying pin to rig - same as blue LED
+#    define PTT_PIN 19
+
+#    define SK_in 23       // Straight Key Input Pin 
+#    define LP_in 25       // Left Paddle Input Pin 
+#    define RP_in 27       // Right Paddle Input Pin
+#    define DEFAULT_MODE CW_MODE
+
+#    define SIDETONE 1    // Enable sidetone osc - eventually need to turn this into a run time param
+#    define ST_Pin 33      // Sidetone Output Pin
 #    define ST_Freq 700   // Set the Sidetone Frequency to 600 Hz
 
 #    undef WITH_SPEED_POT

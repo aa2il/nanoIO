@@ -25,7 +25,12 @@
 //======================================================================
 
 #include "Arduino.h"
+
+// Timer One only works on the arduino
+#if not defined(ESP32)
 #include "TimerOne.h"
+#endif
+
 #include "Morse.h"
 #include "Keyer.h"
 
@@ -47,18 +52,15 @@ Keyer::Keyer(int wpm, float weight)
   ptt_pin_ = PTT_PIN;
   cw_pin_ = CW_PIN;
 
-  // Setup outputs
-  pinMode(LP_in, INPUT);            // sets Left Paddle digital pin as input
-  pinMode(RP_in, INPUT);            // sets Right Paddle digital pin as input
-  pinMode(SK_in, INPUT);            // sets Straight Key digital pin as input
-
+  // Setup inputs & outputs - also enable internal pull-up resistors on inputs
+  pinMode(LP_in, INPUT_PULLUP);            // sets Left Paddle digital pin as input
+  pinMode(RP_in, INPUT_PULLUP);            // sets Right Paddle digital pin as input
+#ifdef SK_in  
+  pinMode(SK_in, INPUT_PULLUP);            // sets Straight Key digital pin as input
+#endif  
 #ifdef SIDETONE
   pinMode(ST_Pin, OUTPUT);          // Sets the Sidetone digital pin as output
 #endif  
-
-  digitalWrite(LP_in, HIGH);        // Enable pullup resistor on Left Paddle Input Pin
-  digitalWrite(RP_in, HIGH);        // Enable pullup resistor on Right Paddle Input Pin
-  digitalWrite(SK_in, HIGH);        // Enable pullup resistor on Straight Key Input Pin
   
   keyerState = IDLE;
   keyerControl = 0;

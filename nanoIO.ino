@@ -13,6 +13,8 @@
            -- see sending_practice script
       - Send ~~<CR> to see a list of commands & ~? to see current settings
       - ^ increases speed in incr, | decreases speed
+      - For Arduino Nano, use Board=Arduino Nano  AND  Processor=ATMega (OLD BOOTLOADER)
+      - For ESP32 Node MCU use Board=Node32s
 
   To Do:
       - Make sure buffer is clear before we adjust speed.  Right now, it
@@ -61,7 +63,11 @@
 
 ***********************************************************************/
 
+// Timer One only works on the arduino
+#if not defined(ESP32)
 #include "TimerOne.h"
+#endif
+
 #include "Morse.h"
 #include "Keyer.h"
 
@@ -89,7 +95,7 @@ long serialSpeed = 3*38400;
 
 // Not user selectable, but USOS behavior can be changed here.
 // We set this to TX extra shifts to be compatible with silly
-// MMTTY default reciever
+// MMTTY default reciever    
 int usos = USOS_MMTTY_HACK;
 
 int stopBits =  STOP_BITS_1R5;  // TX 1.5 stop bits
@@ -171,6 +177,7 @@ Keyer keyer(CWstruc.key_wpm, CWstruc.weight/100.0);
   It opens the port, configures the output pins, and loads
   configuration from EEPROM.
 */
+
 
 void setup()
 {
@@ -287,6 +294,7 @@ void do_serial()
       endWhenBufferEmpty = false;
     }
   }
+ 
 }
 
 void send_wpm()
@@ -621,10 +629,15 @@ void eeSave()
 */
 void initTimer()
 {
+#if defined(ESP32)
+  // Need to find a replacement for Timer One on ESP32
+  // This only affects RTTY which I'm not using this for for now
+#else
   Timer1.stop();
   long bitPeriod = (long) ((1.0f / baudrate) * 1000000); //micros
   Timer1.initialize(bitPeriod / 2.0);
   Timer1.attachInterrupt(timerISR);
+#endif  
 }
 
 /**

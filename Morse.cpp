@@ -225,8 +225,7 @@ void Morse::dit(byte pin)
 
 #ifdef SIDETONE    
   tone(ST_Pin,ST_Freq,_dot_msec);
-#endif~~
-  
+#endif  
 
   delay(_dot_msec);
   if (_dot_usec > 0) delayMicroseconds(_dot_usec);
