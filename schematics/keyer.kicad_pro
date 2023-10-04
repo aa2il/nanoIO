@@ -340,6 +340,10 @@
     [
       "eada8bab-5c4e-42dc-affb-c457f5fa33dd",
       "Full-featured Keyer"
+    ],
+    [
+      "6bc95df7-1c9b-48ce-af90-aa3225b75a2b",
+      "ESP32 Keyer"
     ]
   ],
   "text_variables": {}

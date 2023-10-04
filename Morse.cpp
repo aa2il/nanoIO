@@ -205,7 +205,9 @@ void Morse::wpm(int spd)
 void Morse::dash(byte pin)
 {
   digitalWrite(pin, HIGH);
-
+#ifdef BUZZER_Pin
+  digitalWrite(BUZZER_Pin, HIGH);
+#endif      
 #ifdef SIDETONE  
   tone(ST_Pin,ST_Freq,_dash_msec);
 #endif  
@@ -214,6 +216,10 @@ void Morse::dash(byte pin)
   if (_dash_usec > 0) delayMicroseconds(_dash_usec);
 
 	digitalWrite(pin, LOW);
+#ifdef BUZZER_Pin
+  digitalWrite(BUZZER_Pin, LOW);
+#endif      
+ 
   delay(_space_msec);
 	if (_space_usec > 0) delayMicroseconds(_space_usec);
  
@@ -222,7 +228,9 @@ void Morse::dash(byte pin)
 void Morse::dit(byte pin)
 {
   digitalWrite(pin, HIGH);
-
+#ifdef BUZZER_Pin
+  digitalWrite(BUZZER_Pin, HIGH);
+#endif      
 #ifdef SIDETONE    
   tone(ST_Pin,ST_Freq,_dot_msec);
 #endif  
@@ -231,6 +239,9 @@ void Morse::dit(byte pin)
   if (_dot_usec > 0) delayMicroseconds(_dot_usec);
 
   digitalWrite(pin, LOW);
+#ifdef BUZZER_Pin
+  digitalWrite(BUZZER_Pin, LOW);
+#endif      
   delay(_space_msec);
   if (_space_usec > 0) delayMicroseconds(_space_usec);
 }

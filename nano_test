@@ -10,7 +10,7 @@ set BAUD  = 115200
 # Locate arduino device
 echo " "
 set DEVICE="/dev/serial/by-id/usb-1a86_USB2.0-Ser_-if00-port0"
-set DEVICE="/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0"
+#set DEVICE="/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0"
 echo DEVICE=$DEVICE
 
 # This doesn't work

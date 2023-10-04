@@ -2504,6 +2504,23 @@
     )
   )
 
+  (sheet (at 200.66 146.05) (size 31.75 12.7) (fields_autoplaced)
+    (stroke (width 0.1524) (type solid))
+    (fill (color 0 0 0 0.0000))
+    (uuid 6bc95df7-1c9b-48ce-af90-aa3225b75a2b)
+    (property "Sheetname" "ESP32 Keyer" (at 200.66 145.3384 0)
+      (effects (font (size 1.27 1.27)) (justify left bottom))
+    )
+    (property "Sheetfile" "ESP32-Keyer.kicad_sch" (at 200.66 159.3346 0)
+      (effects (font (size 1.27 1.27)) (justify left top))
+    )
+    (instances
+      (project "keyer"
+        (path "/985a9195-f593-41f4-969b-dba579e1ad1b" (page "3"))
+      )
+    )
+  )
+
   (sheet (at 248.92 146.05) (size 22.86 13.97) (fields_autoplaced)
     (stroke (width 0.1524) (type solid))
     (fill (color 0 0 0 0.0000))

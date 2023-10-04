@@ -58,6 +58,9 @@ Keyer::Keyer(int wpm, float weight)
 #ifdef SK_in  
   pinMode(SK_in, INPUT_PULLUP);            // sets Straight Key digital pin as input
 #endif  
+#ifdef BUZZER_Pin
+  pinMode(BUZZER_Pin, OUTPUT);          // Sets the BUZZER digital pin as output
+#endif  
 #ifdef SIDETONE
   pinMode(ST_Pin, OUTPUT);          // Sets the Sidetone digital pin as output
 #endif  
@@ -221,6 +224,9 @@ bool Keyer::do_paddles()
     sk=1;
     digitalWrite(ptt_pin_, HIGH);
     digitalWrite(cw_pin_, HIGH);
+#ifdef BUZZER_Pin
+    digitalWrite(BUZZER_Pin, HIGH);
+#endif      
 #ifdef SIDETONE      
     tone(ST_Pin, ST_Freq);      // Turn the Sidetone on
 #endif      
@@ -229,6 +235,9 @@ bool Keyer::do_paddles()
     sk=0;
     digitalWrite(ptt_pin_, LOW);
     digitalWrite(cw_pin_, LOW);
+#ifdef BUZZER_Pin
+    digitalWrite(BUZZER_Pin, LOW);
+#endif      
 #ifdef SIDETONE      
     noTone(ST_Pin);      // Turn the Sidetone off
 #endif      
@@ -244,6 +253,9 @@ bool Keyer::do_paddles()
       // Key from either paddle
       digitalWrite(ptt_pin_, HIGH);
       digitalWrite(cw_pin_, HIGH);
+#ifdef BUZZER_Pin
+    digitalWrite(BUZZER_Pin, HIGH);
+#endif      
 #ifdef SIDETONE      
       tone(ST_Pin, ST_Freq);      // Turn the Sidetone on
 #endif      
@@ -251,6 +263,9 @@ bool Keyer::do_paddles()
     } else {
       digitalWrite(ptt_pin_, LOW);
       digitalWrite(cw_pin_, LOW);
+#ifdef BUZZER_Pin
+    digitalWrite(BUZZER_Pin, LOW);
+#endif      
 #ifdef SIDETONE      
       noTone(ST_Pin);      // Turn the Sidetone off
 #endif      
@@ -311,6 +326,9 @@ bool Keyer::do_paddles()
       bit*=2;
       //Serial.write("\tch="); Serial.print(ch);
 #endif      
+#ifdef BUZZER_Pin
+    digitalWrite(BUZZER_Pin, HIGH);
+#endif      
 #ifdef SIDETONE      
       tone(ST_Pin, ST_Freq,ktimer);      // Turn the Sidetone on
 #endif      
@@ -326,6 +344,9 @@ bool Keyer::do_paddles()
 #endif      
         digitalWrite(ptt_pin_, LOW);     // Disable PTT 
         digitalWrite(cw_pin_, LOW);      // Unkey the CW line
+#ifdef BUZZER_Pin
+        digitalWrite(BUZZER_Pin, LOW);
+#endif      
         ktimer = millis() + _space_len;  // inter-element time
         keyerState = INTER_ELEMENT;      // next state
         return true;

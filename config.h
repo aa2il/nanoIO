@@ -156,7 +156,8 @@
 
 #    define SIDETONE 1    // Enable sidetone osc - eventually need to turn this into a run time param
 #    define ST_Pin 7      // Sidetone Output Pin
-#    define ST_Freq 700   // Set the Sidetone Frequency to 600 Hz
+#    define ST_Freq 650   // Set the Sidetone Frequency to 600 Hz
+// #    define BUZZER_Pin 11      // Buzzer Output Pin
 
 #    undef WITH_SPEED_POT
 #    define DEFAULT_WPM 20

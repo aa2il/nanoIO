@@ -719,7 +719,11 @@ void displayConfiguration()
   Serial.write("\n  Keyer mode ");
   if (keyer.get_mode() == STRAIGHT) Serial.write("Straight");
   else if (keyer.get_mode() == IAMBICA) Serial.write("IambicA");
-  else Serial.write("IambicB");
+  else if (keyer.get_mode() == IAMBICB) Serial.write("IambicB");
+  else {
+    Serial.write("Unknown!!!");
+    Serial.write(keyer.get_mode());
+  }
 #ifdef WITH_SPEED_POT
   Serial.write("\n   Speed Pot "); Serial.print(pot_control ? "ON" : "OFF");
   Serial.write("\n     minimum "); Serial.print(CWstruc.min_pot_wpm);
