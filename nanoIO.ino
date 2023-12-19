@@ -840,8 +840,8 @@ void processHalfBit() {
         } else if (sendingChar == FIGS_SHIFT) {
           currentShiftState = FIGS_SHIFT;
         } else {
-			echo(lastAsciiByteSent);
-		}
+          echo(lastAsciiByteSent);
+        }
       }
     }
   } else {

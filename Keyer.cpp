@@ -324,7 +324,11 @@ bool Keyer::do_paddles()
       echo_timing(0);
       ch |= element*bit;
       bit*=2;
+      if( bit<0 )                        // Wrapping causes a crash so dont do it
+        bit=1;
+      //bit = bit << 1;
       //Serial.write("\tch="); Serial.print(ch);
+      //Serial.print(bit);
 #endif      
 #ifdef BUZZER_Pin
     digitalWrite(BUZZER_Pin, HIGH);
